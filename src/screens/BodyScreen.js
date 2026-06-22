@@ -13,7 +13,8 @@ import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { upsertBodyStats, getBodyStatsHistory } from "../database";
 import { useApp } from "../context/AppContext";
-import { getToday, formatDate } from "../utils";
+import { formatDate } from "../utils";
+import { theme } from "../theme";
 
 export default function BodyScreen() {
   const { goals, today } = useApp();
@@ -53,6 +54,8 @@ export default function BodyScreen() {
         notes,
       });
       Alert.alert("成功", "身体数据已记录");
+      setWeight("");
+      setBodyFat("");
       setNotes("");
       loadHistory();
     } catch (e) {
@@ -60,59 +63,138 @@ export default function BodyScreen() {
     }
   }
 
+  const latestWeight = history.length > 0 ? history[0].weight : null;
+  const weightDiff = latestWeight && goals.targetWeight
+    ? (latestWeight - parseFloat(goals.targetWeight)).toFixed(1)
+    : null;
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>身体数据</Text>
-      <Text style={styles.date}>{formatDate(today)}</Text>
+      {/* 今日概览 */}
+      <View style={styles.overviewCard}>
+        <View style={styles.overviewHeader}>
+          <Ionicons name="fitness" size={22} color={theme.colors.primary} />
+          <Text style={styles.overviewTitle}>{formatDate(today)}</Text>
+        </View>
+        {latestWeight && (
+          <View style={styles.weightRow}>
+            <Text style={styles.weightLabel}>最新体重</Text>
+            <View style={styles.weightValueRow}>
+              <Text style={styles.weightValue}>{latestWeight}</Text>
+              <Text style={styles.weightUnit}>kg</Text>
+              {weightDiff && (
+                <View
+                  style={[
+                    styles.weightDiff,
+                    { backgroundColor: parseFloat(weightDiff) >= 0 ? "#E8F5E9" : "#FFEBEE" },
+                  ]}
+                >
+                  <Ionicons
+                    name={parseFloat(weightDiff) >= 0 ? "arrow-up" : "arrow-down"}
+                    size={11}
+                    color={parseFloat(weightDiff) >= 0 ? theme.colors.secondary : theme.colors.error}
+                  />
+                  <Text
+                    style={[
+                      styles.weightDiffText,
+                      {
+                        color: parseFloat(weightDiff) >= 0 ? theme.colors.secondary : theme.colors.error,
+                      },
+                    ]}
+                  >
+                    {Math.abs(weightDiff)}kg
+                  </Text>
+                </View>
+              )}
+            </View>
+            <Text style={styles.targetHint}>目标 {goals.targetWeight}kg</Text>
+          </View>
+        )}
+      </View>
 
-      <View style={styles.form}>
-        <Text style={styles.fieldLabel}>体重 (kg)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder={`目标: ${goals.targetWeight}kg`}
-          value={weight}
-          onChangeText={setWeight}
-          keyboardType="decimal-pad"
-        />
+      {/* 记录表单 */}
+      <View style={styles.formCard}>
+        <View style={styles.formHeader}>
+          <Ionicons name="create" size={18} color={theme.colors.primary} />
+          <Text style={styles.formTitle}>记录数据</Text>
+        </View>
 
-        <Text style={styles.fieldLabel}>体脂率 (%)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="例：15"
-          value={bodyFat}
-          onChangeText={setBodyFat}
-          keyboardType="decimal-pad"
-        />
+        <View style={styles.row}>
+          <View style={[styles.fieldGroup, { flex: 1 }]}>
+            <Text style={styles.fieldLabel}>体重</Text>
+            <View style={styles.inputWithUnit}>
+              <TextInput
+                style={[styles.input, { paddingRight: 36 }]}
+                placeholder={`${goals.targetWeight}`}
+                placeholderTextColor={theme.colors.textHint}
+                value={weight}
+                onChangeText={setWeight}
+                keyboardType="decimal-pad"
+              />
+              <Text style={styles.unitText}>kg</Text>
+            </View>
+          </View>
+          <View style={[styles.fieldGroup, { flex: 1 }]}>
+            <Text style={styles.fieldLabel}>体脂率</Text>
+            <View style={styles.inputWithUnit}>
+              <TextInput
+                style={[styles.input, { paddingRight: 36 }]}
+                placeholder="15"
+                placeholderTextColor={theme.colors.textHint}
+                value={bodyFat}
+                onChangeText={setBodyFat}
+                keyboardType="decimal-pad"
+              />
+              <Text style={styles.unitText}>%</Text>
+            </View>
+          </View>
+        </View>
 
-        <Text style={styles.fieldLabel}>备注</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="训练感受、身体状态..."
-          value={notes}
-          onChangeText={setNotes}
-          multiline
-        />
+        <View style={styles.fieldGroup}>
+          <Text style={styles.fieldLabel}>备注</Text>
+          <TextInput
+            style={[styles.input, styles.notesInput]}
+            placeholder="训练感受、身体状态..."
+            placeholderTextColor={theme.colors.textHint}
+            value={notes}
+            onChangeText={setNotes}
+            multiline
+          />
+        </View>
 
-        <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
+        <TouchableOpacity style={styles.saveBtn} onPress={handleSave} activeOpacity={0.8}>
           <Ionicons name="save" size={20} color="#fff" />
           <Text style={styles.saveText}>记录</Text>
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.sectionTitle}>历史记录</Text>
+      {/* 历史记录 */}
+      <View style={styles.sectionHeader}>
+        <Ionicons name="time" size={18} color={theme.colors.textPrimary} />
+        <Text style={styles.sectionTitle}>历史记录</Text>
+      </View>
+
       {loading ? (
-        <ActivityIndicator color="#FF6B35" />
+        <ActivityIndicator color={theme.colors.primary} style={{ marginTop: 20 }} />
       ) : history.length === 0 ? (
-        <Text style={styles.empty}>暂无记录</Text>
+        <View style={styles.emptyState}>
+          <Ionicons name="analytics-outline" size={40} color={theme.colors.textDisabled} />
+          <Text style={styles.emptyText}>暂无记录</Text>
+        </View>
       ) : (
         history.map((item) => (
           <View key={item.id} style={styles.historyItem}>
-            <Text style={styles.historyDate}>{formatDate(item.date)}</Text>
+            <View style={styles.historyLeft}>
+              <View style={styles.historyDot} />
+              <Text style={styles.historyDate}>{formatDate(item.date)}</Text>
+            </View>
             <View style={styles.historyStats}>
               {item.weight && <Text style={styles.historyStat}>⚖️ {item.weight}kg</Text>}
               {item.body_fat && <Text style={styles.historyStat}>📊 {item.body_fat}%</Text>}
             </View>
-            {item.notes ? <Text style={styles.historyNotes}>{item.notes}</Text> : null}
+            {item.notes ? (
+              <Text style={styles.historyNotes} numberOfLines={1}>{item.notes}</Text>
+            ) : null}
           </View>
         ))
       )}
@@ -123,92 +205,204 @@ export default function BodyScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: theme.colors.bg,
   },
   content: {
     padding: 16,
     paddingBottom: 32,
   },
-  title: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#333",
-  },
-  date: {
-    fontSize: 14,
-    color: "#999",
+  overviewCard: {
+    backgroundColor: theme.colors.bgPaper,
+    borderRadius: theme.shape.md,
+    padding: 16,
     marginBottom: 16,
+    ...theme.shadows.sm,
   },
-  form: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
+  overviewHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 12,
+    paddingBottom: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: theme.colors.divider,
+  },
+  overviewTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: theme.colors.textPrimary,
+  },
+  weightRow: {
+    alignItems: "center",
+    paddingVertical: 8,
+  },
+  weightLabel: {
+    fontSize: 12,
+    color: theme.colors.textHint,
+    fontWeight: "500",
+    marginBottom: 4,
+  },
+  weightValueRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 4,
+  },
+  weightValue: {
+    fontSize: 36,
+    fontWeight: "700",
+    color: theme.colors.textPrimary,
+  },
+  weightUnit: {
+    fontSize: 16,
+    color: theme.colors.textSecondary,
+    fontWeight: "500",
+  },
+  weightDiff: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    marginLeft: 8,
+  },
+  weightDiffText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  targetHint: {
+    fontSize: 12,
+    color: theme.colors.textHint,
+    marginTop: 4,
+  },
+  formCard: {
+    backgroundColor: theme.colors.bgPaper,
+    borderRadius: theme.shape.md,
     padding: 16,
     marginBottom: 20,
+    ...theme.shadows.sm,
+  },
+  formHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 14,
+    paddingBottom: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: theme.colors.divider,
+  },
+  formTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: theme.colors.textPrimary,
+  },
+  row: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  fieldGroup: {
+    marginBottom: 14,
   },
   fieldLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
-    color: "#555",
+    color: theme.colors.textSecondary,
     marginBottom: 6,
-    marginTop: 8,
   },
   input: {
-    backgroundColor: "#F5F5F5",
-    borderRadius: 10,
+    backgroundColor: theme.colors.bgGrey,
+    borderRadius: theme.shape.sm,
     padding: 12,
     fontSize: 15,
-    color: "#333",
+    color: theme.colors.textPrimary,
+  },
+  inputWithUnit: {
+    position: "relative",
+  },
+  unitText: {
+    position: "absolute",
+    right: 12,
+    top: 12,
+    fontSize: 14,
+    color: theme.colors.textHint,
+    fontWeight: "500",
+  },
+  notesInput: {
+    minHeight: 70,
+    textAlignVertical: "top",
   },
   saveBtn: {
-    backgroundColor: "#4CAF50",
-    borderRadius: 12,
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.shape.sm,
     padding: 14,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     gap: 6,
-    marginTop: 16,
+    marginTop: 4,
   },
   saveText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
   },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 12,
+  },
   sectionTitle: {
     fontSize: 17,
     fontWeight: "600",
-    color: "#333",
-    marginBottom: 10,
+    color: theme.colors.textPrimary,
   },
-  empty: {
-    textAlign: "center",
-    color: "#999",
+  emptyState: {
+    alignItems: "center",
+    marginTop: 30,
+  },
+  emptyText: {
     fontSize: 14,
-    marginTop: 16,
+    color: theme.colors.textHint,
+    marginTop: 8,
   },
   historyItem: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
+    backgroundColor: theme.colors.bgPaper,
+    borderRadius: theme.shape.sm,
     padding: 12,
     marginBottom: 8,
+    ...theme.shadows.sm,
+  },
+  historyLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 6,
+  },
+  historyDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: theme.colors.primary,
   },
   historyDate: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#333",
-    marginBottom: 4,
+    color: theme.colors.textPrimary,
   },
   historyStats: {
     flexDirection: "row",
     gap: 16,
+    marginLeft: 16,
   },
   historyStat: {
     fontSize: 13,
-    color: "#555",
+    color: theme.colors.textSecondary,
   },
   historyNotes: {
     fontSize: 12,
-    color: "#999",
+    color: theme.colors.textHint,
     marginTop: 4,
+    marginLeft: 16,
   },
 });

@@ -1,18 +1,12 @@
-import React, { useState, useEffect, useCallback } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-} from "react-native";
+import React, { useState, useCallback } from "react";
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import { getMealHistory } from "../database";
-import { formatDate, MEAL_TYPES } from "../utils";
 import { Ionicons } from "@expo/vector-icons";
+import { getMealHistory } from "../database";
+import { formatDate } from "../utils";
+import { theme } from "../theme";
 
-export default function HistoryScreen({ navigation }) {
+export default function HistoryScreen() {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -33,7 +27,6 @@ export default function HistoryScreen({ navigation }) {
     setLoading(false);
   }
 
-  // 按日期分组
   const grouped = {};
   for (const meal of history) {
     if (!grouped[meal.date]) grouped[meal.date] = [];
@@ -47,35 +40,63 @@ export default function HistoryScreen({ navigation }) {
     afternoon_snack: "午加", dinner: "晚", supper: "宵",
   };
 
+  const typeColors = {
+    breakfast: "#FF9800", morning_snack: "#8D6E63", lunch: "#FF6B35",
+    afternoon_snack: "#8D6E63", dinner: "#5C6BC0", supper: "#7B1FA2",
+  };
+
   if (loading) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator size="large" color="#FF6B35" />
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>打卡历史</Text>
       {dates.length === 0 ? (
-        <Text style={styles.empty}>暂无打卡记录</Text>
+        <View style={styles.emptyState}>
+          <Ionicons name="time-outline" size={56} color={theme.colors.textDisabled} />
+          <Text style={styles.emptyTitle}>暂无打卡记录</Text>
+          <Text style={styles.emptySub}>开始记录你的第一餐吧！</Text>
+        </View>
       ) : (
         dates.map((date) => {
           const dayMeals = grouped[date];
           const totCal = dayMeals.reduce((s, m) => s + (m.calories || 0), 0);
           const totPro = dayMeals.reduce((s, m) => s + (m.protein || 0), 0);
           return (
-            <View key={date} style={styles.dayGroup}>
+            <View key={date} style={styles.dayCard}>
               <View style={styles.dayHeader}>
-                <Text style={styles.dayDate}>{formatDate(date)}</Text>
-                <Text style={styles.dayStats}>
-                  {Math.round(totCal)}kcal · {Math.round(totPro)}g 蛋白
-                </Text>
+                <View style={styles.dayHeaderLeft}>
+                  <Ionicons name="calendar" size={16} color={theme.colors.textSecondary} />
+                  <Text style={styles.dayDate}>{formatDate(date)}</Text>
+                </View>
+                <View style={styles.dayStats}>
+                  <Text style={styles.dayStat}>
+                    <Ionicons name="flame" size={12} color="#FF9800" /> {Math.round(totCal)}
+                  </Text>
+                  <Text style={styles.dayStat}>
+                    <Ionicons name="barbell" size={12} color={theme.colors.secondary} /> {Math.round(totPro)}g
+                  </Text>
+                </View>
               </View>
               <View style={styles.mealRow}>
                 {dayMeals.map((m) => (
-                  <View key={m.meal_type} style={styles.mealTag}>
+                  <View
+                    key={m.meal_type}
+                    style={[
+                      styles.mealTag,
+                      { backgroundColor: (typeColors[m.meal_type] || theme.colors.primary) + "15" },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.mealDot,
+                        { backgroundColor: typeColors[m.meal_type] || theme.colors.primary },
+                      ]}
+                    />
                     <Text style={styles.mealTagText}>
                       {typeLabels[m.meal_type] || m.meal_type}
                     </Text>
@@ -93,7 +114,7 @@ export default function HistoryScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: theme.colors.bg,
   },
   content: {
     padding: 16,
@@ -103,58 +124,79 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: theme.colors.bg,
   },
-  title: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#333",
-    marginBottom: 16,
+  emptyState: {
+    alignItems: "center",
+    marginTop: 80,
   },
-  empty: {
-    textAlign: "center",
-    color: "#999",
-    marginTop: 40,
-    fontSize: 15,
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: theme.colors.textSecondary,
+    marginTop: 16,
   },
-  dayGroup: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 14,
+  emptySub: {
+    fontSize: 14,
+    color: theme.colors.textHint,
+    marginTop: 6,
+  },
+  dayCard: {
+    backgroundColor: theme.colors.bgPaper,
+    borderRadius: theme.shape.md,
+    padding: 16,
     marginBottom: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 3,
-    elevation: 1,
+    ...theme.shadows.sm,
   },
   dayHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 8,
+    alignItems: "center",
+    marginBottom: 12,
+    paddingBottom: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: theme.colors.divider,
+  },
+  dayHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
   dayDate: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#333",
+    color: theme.colors.textPrimary,
   },
   dayStats: {
+    flexDirection: "row",
+    gap: 14,
+  },
+  dayStat: {
     fontSize: 12,
-    color: "#999",
+    color: theme.colors.textSecondary,
+    fontWeight: "500",
   },
   mealRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 6,
+    gap: 8,
   },
   mealTag: {
-    backgroundColor: "#FFF3E0",
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  mealDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   mealTagText: {
     fontSize: 12,
-    color: "#E65100",
+    color: theme.colors.textPrimary,
     fontWeight: "500",
   },
 });

@@ -11,10 +11,11 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { upsertMeal } from "../database";
 import { MEAL_TYPES, RATING_OPTIONS } from "../utils";
+import { theme, mealConfig } from "../theme";
 
 export default function MealEntryScreen({ route, navigation }) {
   const { mealType, date, existingData, onSave } = route.params;
-  const mealInfo = MEAL_TYPES.find((m) => m.key === mealType);
+  const cfg = mealConfig[mealType] || { label: mealType, icon: "restaurant", color: theme.colors.primary, bgColor: "#FFF3E0", time: "" };
 
   const [foods, setFoods] = useState(existingData?.foods || "");
   const [protein, setProtein] = useState(existingData?.protein?.toString() || "");
@@ -44,78 +45,118 @@ export default function MealEntryScreen({ route, navigation }) {
     }
   }
 
+  const isEditing = !!existingData?.foods;
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* 餐次标题 */}
-      <View style={styles.header}>
-        <Ionicons name={mealInfo.icon} size={32} color="#FF6B35" />
-        <View>
-          <Text style={styles.mealLabel}>{mealInfo.label}</Text>
-          <Text style={styles.mealTime}>推荐时间 {mealInfo.time}</Text>
+      {/* 餐次标题卡片 */}
+      <View style={[styles.headerCard, { borderLeftColor: cfg.color }]}>
+        <View style={[styles.iconWrap, { backgroundColor: cfg.bgColor }]}>
+          <Ionicons name={cfg.icon} size={28} color={cfg.color} />
         </View>
+        <View style={styles.headerText}>
+          <Text style={styles.mealLabel}>{cfg.label}</Text>
+          <Text style={styles.mealTime}>推荐时间 {cfg.time}</Text>
+        </View>
+        {isEditing && (
+          <View style={styles.editBadge}>
+            <Ionicons name="create" size={12} color={theme.colors.info} />
+            <Text style={styles.editBadgeText}>编辑</Text>
+          </View>
+        )}
       </View>
 
       {/* 食物 */}
-      <Text style={styles.fieldLabel}>吃了什么</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="例：鸡胸肉200g + 米饭1碗 + 西兰花"
-        value={foods}
-        onChangeText={setFoods}
-        multiline
-      />
+      <View style={styles.fieldGroup}>
+        <Text style={styles.fieldLabel}>
+          <Ionicons name="restaurant" size={14} color={theme.colors.textSecondary} /> 吃了什么
+        </Text>
+        <TextInput
+          style={styles.input}
+          placeholder="例：鸡胸肉200g、米饭1碗、西兰花"
+          placeholderTextColor={theme.colors.textHint}
+          value={foods}
+          onChangeText={setFoods}
+          multiline
+        />
+      </View>
 
-      {/* 蛋白质 */}
-      <Text style={styles.fieldLabel}>蛋白质 (g)</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="例如：30"
-        value={protein}
-        onChangeText={setProtein}
-        keyboardType="numeric"
-      />
-
-      {/* 热量 */}
-      <Text style={styles.fieldLabel}>热量 (kcal)</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="例如：450"
-        value={calories}
-        onChangeText={setCalories}
-        keyboardType="numeric"
-      />
+      {/* 营养一行两个输入框 */}
+      <View style={styles.row}>
+        <View style={[styles.fieldGroup, { flex: 1 }]}>
+          <Text style={styles.fieldLabel}>
+            <Ionicons name="barbell" size={14} color={theme.colors.secondary} /> 蛋白质
+          </Text>
+          <View style={styles.inputWithUnit}>
+            <TextInput
+              style={[styles.input, styles.inputRow]}
+              placeholder="0"
+              placeholderTextColor={theme.colors.textHint}
+              value={protein}
+              onChangeText={setProtein}
+              keyboardType="numeric"
+            />
+            <Text style={styles.unitText}>g</Text>
+          </View>
+        </View>
+        <View style={[styles.fieldGroup, { flex: 1 }]}>
+          <Text style={styles.fieldLabel}>
+            <Ionicons name="flame" size={14} color="#FF9800" /> 热量
+          </Text>
+          <View style={styles.inputWithUnit}>
+            <TextInput
+              style={[styles.input, styles.inputRow]}
+              placeholder="0"
+              placeholderTextColor={theme.colors.textHint}
+              value={calories}
+              onChangeText={setCalories}
+              keyboardType="numeric"
+            />
+            <Text style={styles.unitText}>kcal</Text>
+          </View>
+        </View>
+      </View>
 
       {/* 胃口评分 */}
-      <Text style={styles.fieldLabel}>胃口状态</Text>
-      <View style={styles.ratingRow}>
-        {RATING_OPTIONS.map((opt) => (
-          <TouchableOpacity
-            key={opt.value}
-            style={[styles.ratingBtn, rating === opt.value && styles.ratingActive]}
-            onPress={() => setRating(opt.value)}
-          >
-            <Text style={styles.ratingEmoji}>{opt.emoji}</Text>
-            <Text style={[styles.ratingLabel, rating === opt.value && styles.ratingLabelActive]}>
-              {opt.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+      <View style={styles.fieldGroup}>
+        <Text style={styles.fieldLabel}>
+          <Ionicons name="happy" size={14} color={theme.colors.textSecondary} /> 胃口状态
+        </Text>
+        <View style={styles.ratingRow}>
+          {RATING_OPTIONS.map((opt) => (
+            <TouchableOpacity
+              key={opt.value}
+              style={[styles.ratingBtn, rating === opt.value && styles.ratingActive]}
+              onPress={() => setRating(opt.value)}
+            >
+              <Text style={styles.ratingEmoji}>{opt.emoji}</Text>
+              <Text style={[styles.ratingLabel, rating === opt.value && styles.ratingLabelActive]}>
+                {opt.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
 
       {/* 备注 */}
-      <Text style={styles.fieldLabel}>备注</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="有什么想记录的..."
-        value={notes}
-        onChangeText={setNotes}
-        multiline
-      />
+      <View style={styles.fieldGroup}>
+        <Text style={styles.fieldLabel}>
+          <Ionicons name="document-text" size={14} color={theme.colors.textSecondary} /> 备注
+        </Text>
+        <TextInput
+          style={[styles.input, styles.notesInput]}
+          placeholder="有什么想记录的..."
+          placeholderTextColor={theme.colors.textHint}
+          value={notes}
+          onChangeText={setNotes}
+          multiline
+        />
+      </View>
 
       {/* 保存按钮 */}
-      <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
+      <TouchableOpacity style={styles.saveBtn} onPress={handleSave} activeOpacity={0.8}>
         <Ionicons name="checkmark-circle" size={22} color="#fff" />
-        <Text style={styles.saveText}>保存打卡</Text>
+        <Text style={styles.saveText}>{isEditing ? "更新打卡" : "保存打卡"}</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -124,46 +165,100 @@ export default function MealEntryScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: theme.colors.bg,
   },
   content: {
     padding: 16,
     paddingBottom: 40,
   },
-  header: {
+  headerCard: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    marginBottom: 24,
-    backgroundColor: "#fff",
-    borderRadius: 12,
+    gap: 14,
+    backgroundColor: theme.colors.bgPaper,
+    borderRadius: theme.shape.md,
     padding: 16,
+    marginBottom: 20,
+    borderLeftWidth: 4,
+    ...theme.shadows.sm,
+  },
+  iconWrap: {
+    width: 50,
+    height: 50,
+    borderRadius: theme.shape.sm,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  headerText: {
+    flex: 1,
   },
   mealLabel: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#333",
+    color: theme.colors.textPrimary,
   },
   mealTime: {
     fontSize: 12,
-    color: "#999",
+    color: theme.colors.textHint,
     marginTop: 2,
   },
+  editBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: "#E3F2FD",
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  editBadgeText: {
+    fontSize: 11,
+    color: theme.colors.info,
+    fontWeight: "500",
+  },
+  fieldGroup: {
+    marginBottom: 16,
+  },
   fieldLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
-    color: "#555",
-    marginBottom: 6,
-    marginTop: 12,
+    color: theme.colors.textSecondary,
+    marginBottom: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
   },
   input: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 12,
+    backgroundColor: theme.colors.bgPaper,
+    borderRadius: theme.shape.sm,
+    padding: 14,
     fontSize: 15,
-    color: "#333",
+    color: theme.colors.textPrimary,
     borderWidth: 1,
-    borderColor: "#E0E0E0",
+    borderColor: theme.colors.divider,
+    lineHeight: 22,
+  },
+  inputRow: {
+    paddingRight: 40,
+  },
+  inputWithUnit: {
+    position: "relative",
+  },
+  unitText: {
+    position: "absolute",
+    right: 14,
+    top: 14,
+    fontSize: 14,
+    color: theme.colors.textHint,
+    fontWeight: "500",
+  },
+  notesInput: {
+    minHeight: 80,
+    textAlignVertical: "top",
+  },
+  row: {
+    flexDirection: "row",
+    gap: 12,
   },
   ratingRow: {
     flexDirection: "row",
@@ -172,37 +267,39 @@ const styles = StyleSheet.create({
   ratingBtn: {
     flex: 1,
     alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 10,
+    backgroundColor: theme.colors.bgPaper,
+    borderRadius: theme.shape.sm,
     padding: 10,
     borderWidth: 1,
-    borderColor: "#E0E0E0",
+    borderColor: theme.colors.divider,
   },
   ratingActive: {
-    borderColor: "#FF6B35",
-    backgroundColor: "#FFF3E0",
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primary + "10",
   },
   ratingEmoji: {
     fontSize: 22,
   },
   ratingLabel: {
     fontSize: 10,
-    color: "#999",
-    marginTop: 2,
+    color: theme.colors.textHint,
+    marginTop: 3,
+    fontWeight: "500",
   },
   ratingLabelActive: {
-    color: "#FF6B35",
+    color: theme.colors.primary,
     fontWeight: "600",
   },
   saveBtn: {
-    backgroundColor: "#FF6B35",
-    borderRadius: 12,
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.shape.md,
     padding: 16,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     gap: 8,
-    marginTop: 24,
+    marginTop: 8,
+    ...theme.shadows.md,
   },
   saveText: {
     color: "#fff",

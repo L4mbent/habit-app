@@ -1,39 +1,77 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { theme } from "../theme";
 
-export default function StatsCard({ icon, label, value, color }) {
+export default function StatsCard({ icon, label, value, color, trend }) {
   return (
     <View style={styles.card}>
-      <Ionicons name={icon} size={24} color={color || "#FF6B35"} />
+      <View style={[styles.iconCircle, { backgroundColor: (color || theme.colors.primary) + "15" }]}>
+        <Ionicons name={icon} size={22} color={color || theme.colors.primary} />
+      </View>
       <Text style={styles.value}>{value}</Text>
       <Text style={styles.label}>{label}</Text>
+      {trend !== undefined && (
+        <View style={[styles.trend, { backgroundColor: trend >= 0 ? "#E8F5E9" : "#FFEBEE" }]}>
+          <Ionicons
+            name={trend >= 0 ? "trending-up" : "trending-down"}
+            size={10}
+            color={trend >= 0 ? theme.colors.secondary : theme.colors.error}
+          />
+          <Text
+            style={[
+              styles.trendText,
+              { color: trend >= 0 ? theme.colors.secondary : theme.colors.error },
+            ]}
+          >
+            {Math.abs(trend)}%
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 14,
+    backgroundColor: theme.colors.bgPaper,
+    borderRadius: theme.shape.sm,
+    padding: 16,
     alignItems: "center",
     flex: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 3,
-    elevation: 1,
+    ...theme.shadows.sm,
+  },
+  iconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
   },
   value: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: "700",
-    color: "#333",
-    marginTop: 6,
+    color: theme.colors.textPrimary,
+    lineHeight: 28,
   },
   label: {
-    fontSize: 11,
-    color: "#999",
+    fontSize: 12,
+    color: theme.colors.textHint,
+    fontWeight: "500",
     marginTop: 2,
+  },
+  trend: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginTop: 6,
+  },
+  trendText: {
+    fontSize: 10,
+    fontWeight: "600",
   },
 });

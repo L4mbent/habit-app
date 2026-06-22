@@ -11,7 +11,7 @@
       "bundleIdentifier": "com.habit.tracker"
     },
     "android": {
-      "package": "com.habit.tracker",
+      "package": "com.habit_tracker",
       "adaptiveIcon": {
         "backgroundColor": "#FF6B35",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -25,12 +25,24 @@
     },
     "plugins": [
       "expo-sqlite",
-      "expo-status-bar"
+      "expo-status-bar",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
+            "buildToolsVersion": "35.0.0"
+          },
+          "ios": {}
+        }
+      ]
     ],
     "extra": {
       "eas": {
-        "projectId": "917bfa43-7b8e-430e-b6a6-71e76677d8ce"
+        "projectId": "511bd47a-0e1b-41fd-bb00-b3cb1bcc4bcd"
       }
-    }
+    },
+    "owner": "l4mbent"
   }
 }

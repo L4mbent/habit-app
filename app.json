@@ -11,7 +11,7 @@
       "bundleIdentifier": "com.habit.tracker"
     },
     "android": {
-      "package": "com.habit_tracker",
+      "package": "com.habitapp.tracker",
       "adaptiveIcon": {
         "backgroundColor": "#FF6B35",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -25,18 +25,7 @@
     },
     "plugins": [
       "expo-sqlite",
-      "expo-status-bar",
-      [
-        "expo-build-properties",
-        {
-          "android": {
-            "compileSdkVersion": 35,
-            "targetSdkVersion": 35,
-            "buildToolsVersion": "35.0.0"
-          },
-          "ios": {}
-        }
-      ]
+      "expo-status-bar"
     ],
     "extra": {
       "eas": {

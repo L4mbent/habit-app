@@ -39,3 +39,10 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# SSH known_hosts
+*.known_hosts
+known_hosts*
+
+# Git temporary index
+.git/new_index

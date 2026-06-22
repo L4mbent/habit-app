@@ -10,38 +10,23 @@ export async function getDatabase() {
 }
 
 async function initDatabase(database) {
-  await database.execAsync(`
-    CREATE TABLE IF NOT EXISTS user_config (
-      key TEXT PRIMARY KEY,
-      value TEXT NOT NULL
-    );
-  `);
+  await database.runAsync(
+    "CREATE TABLE IF NOT EXISTS user_config (key TEXT PRIMARY KEY, value TEXT NOT NULL)"
+  );
 
-  await database.execAsync(`
-    CREATE TABLE IF NOT EXISTS meals (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      date TEXT NOT NULL,
-      meal_type TEXT NOT NULL,
-      foods TEXT,
-      protein REAL DEFAULT 0,
-      calories REAL DEFAULT 0,
-      rating INTEGER DEFAULT 3,
-      notes TEXT,
-      created_at TEXT DEFAULT (datetime("now", "localtime")),
-      UNIQUE(date, meal_type)
-    );
-  `);
+  await database.runAsync(
+    "CREATE TABLE IF NOT EXISTS meals (id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT NOT NULL, meal_type TEXT NOT NULL, foods TEXT, protein REAL DEFAULT 0, calories REAL DEFAULT 0, rating INTEGER DEFAULT 3, notes TEXT, created_at TEXT DEFAULT (datetime('now','localtime')), UNIQUE(date, meal_type))"
+  );
 
-  await database.execAsync(`
-    CREATE TABLE IF NOT EXISTS body_stats (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      date TEXT NOT NULL UNIQUE,
-      weight REAL,
-      body_fat REAL,
-      notes TEXT,
-      created_at TEXT DEFAULT (datetime("now", "localtime"))
-    );
-  `);
+  await database.runAsync(
+    "CREATE TABLE IF NOT EXISTS body_stats (id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT NOT NULL UNIQUE, weight REAL, body_fat REAL, notes TEXT, created_at TEXT DEFAULT (datetime('now','localtime')))"
+  );
+
+  const tables = await database.getAllAsync(
+    "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('user_config','meals','body_stats') ORDER BY name"
+  );
+  const tableNames = tables.map(r => r.name).join(", ");
+  console.log("Database tables initialized:", tableNames);
 }
 
 export async function getConfig(key) {
@@ -63,8 +48,7 @@ export async function getMeal(date, mealType) {
 export async function upsertMeal({ date, meal_type, foods, protein, calories, rating, notes }) {
   const database = await getDatabase();
   await database.runAsync(
-    `INSERT OR REPLACE INTO meals (date, meal_type, foods, protein, calories, rating, notes)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    "INSERT OR REPLACE INTO meals (date, meal_type, foods, protein, calories, rating, notes) VALUES (?, ?, ?, ?, ?, ?, ?)",
     date,
     meal_type,
     foods || "",

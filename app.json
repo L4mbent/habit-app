@@ -2,7 +2,7 @@
   "expo": {
     "name": "增肌打卡",
     "slug": "habit-app",
-    "version": "1.0.0",
+    "version": "1.3.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -11,14 +11,14 @@
       "bundleIdentifier": "com.habit.tracker"
     },
     "android": {
-      "package": "com.habit.tracker",
+      "package": "com.habitapp.tracker",
       "adaptiveIcon": {
         "backgroundColor": "#FF6B35",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "versionCode": 1
+      "versionCode": 3
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -29,8 +29,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "your-project-id"
+        "projectId": "511bd47a-0e1b-41fd-bb00-b3cb1bcc4bcd"
       }
-    }
+    },
+    "owner": "l4mbent"
   }
 }

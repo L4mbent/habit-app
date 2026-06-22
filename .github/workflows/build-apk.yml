@@ -19,8 +19,6 @@ jobs:
         run: npm install
 
       - name: Build with EAS
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
-          command: eas build --platform android --profile preview --non-interactive
+        run: npx eas build --platform android --profile preview --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
